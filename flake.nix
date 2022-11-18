@@ -18,6 +18,5 @@
           type = "app";
           program = toString runTests;
         };
-
       });
 }
