@@ -2,7 +2,7 @@
 
 let
   nix2lua = import ./lib.nix;
-  inherit (nix2lua) toLua mkLuaNil;
+  inherit (nix2lua) toLua mkLuaNil mkDictItem;
 in
 pkgs.lib.runTests {
   "test returns null" = {
@@ -68,5 +68,13 @@ pkgs.lib.runTests {
       };
     };
     expected = "{ [\"first\"] = { [\"second\"] = { [\"last\"] = \"hello\" } } }";
+  };
+  "test returns array with dict items" = {
+    expr = toLua [
+      "foo"
+      (mkDictItem "foo" "hello")
+      10
+    ];
+    expected = "{ \"foo\", [\"foo\"] = \"hello\", 10 }";
   };
 }
