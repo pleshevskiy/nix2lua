@@ -24,7 +24,7 @@ let
     else if isFloat val || isInt val then toString val
     else if isBool val then toLuaBool val
     else if isNull val then null
-    else null;
+    else throw "[nix2lua] Value '${toString val}' is not supported";
 
   toLuaList = val:
     wrapObj (excludeNull (map toLua val));
@@ -43,8 +43,7 @@ let
 
   validString = value:
     if isString value then value
-    else throw "Value '${toString value}' is not a valid string";
-
+    else throw "[nix2lua] Value '${toString value}' is not a valid string";
 in
 {
   inherit toLua;
