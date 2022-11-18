@@ -2,6 +2,9 @@ let
   inherit (builtins) isString isFloat isInt isBool isList isAttrs isNull;
   inherit (builtins) concatStringsSep filter mapAttrs attrValues;
 
+  mkLuaRaw = raw: { _type = "raw"; inherit raw; };
+  isLuaRaw = val: getType val == "raw";
+
   mkLuaNil = { _type = "nil"; };
   isLuaNil = val: getType val == "nil";
 
@@ -17,6 +20,7 @@ let
 
   toLua = val:
     if isLuaNil val then "nil"
+    else if isLuaRaw val then val.raw
     else if isDictItem val then toLuaDictItem val.name val.value
     else if isAttrs val then toLuaDict val
     else if isList val then toLuaList val
@@ -47,5 +51,5 @@ let
 in
 {
   inherit toLua;
-  inherit mkLuaNil mkDictItem;
+  inherit mkLuaNil mkDictItem mkLuaRaw;
 }
