@@ -6,7 +6,7 @@ into lua format.
 This library was initially designed for my personal
 [neovim flake](https://git.pleshevski.ru/mynix/neovim).
 
-## Installation
+# Installation
 
 Add nix2lua as input to your flake.nix
 
@@ -31,7 +31,7 @@ Add nix2lua as input to your flake.nix
 }
 ```
 
-## References
+# References
 
 `toLua expr`
 
@@ -76,3 +76,9 @@ Add nix2lua as input to your flake.nix
 >   (mkNamedField "bar" "baz")
 > ];
 > ```
+
+# License
+
+GNU General Public License v3.0 or later
+
+See [COPYING](./COPYING) to see the full text.
