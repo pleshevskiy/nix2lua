@@ -42,8 +42,8 @@ Add nix2lua as input to your flake.nix
 > To render `nil` you should use the `mkLuaNil` function.
 >
 > ```nix
-> toLua { foo = "bar"; };
-> toLua [ 10 "foo" [ "bar" ] ];
+> toLua { foo = "bar"; }
+> toLua [ 10 "foo" [ "bar" ] ]
 > ```
 
 `mkLuaNil expr`
@@ -51,7 +51,7 @@ Add nix2lua as input to your flake.nix
 > Creates a type that will mapped by the `toLua` as `nil`
 >
 > ```nix
-> toLua mkLuaNil;
+> toLua mkLuaNil
 > ```
 
 `mkLuaRaw expr`
@@ -60,7 +60,7 @@ Add nix2lua as input to your flake.nix
 > `expr`.
 >
 > ```nix
-> toLua (mkLuaRaw "require('bar').baz");
+> toLua (mkLuaRaw "require('bar').baz")
 > ```
 
 `mkNamedField name expr`
@@ -74,7 +74,7 @@ Add nix2lua as input to your flake.nix
 > toLua [
 >   "foo"
 >   (mkNamedField "bar" "baz")
-> ];
+> ]
 > ```
 
 # License
