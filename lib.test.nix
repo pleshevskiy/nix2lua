@@ -2,7 +2,10 @@
 
 let
   nix2lua = import ./lib.nix;
-  inherit (nix2lua) toLua mkLuaNil mkDictItem mkLuaRaw;
+  inherit (nix2lua) toLua mkLuaNil mkLuaRaw mkNamedField;
+  inherit (builtins) tryEval;
+
+  failed = { success = false; value = false; };
 in
 pkgs.lib.runTests {
   "test returns null" = {
@@ -37,15 +40,15 @@ pkgs.lib.runTests {
     expr = toLua false;
     expected = "false";
   };
-  "test returns array with all primitive types" = {
+  "test returns table with all primitive types" = {
     expr = toLua [ "hello" 10 10.1 true ];
     expected = "{ \"hello\", 10, 10.100000, true }";
   };
-  "test returns array without null values" = {
+  "test returns table without null values" = {
     expr = toLua [ null "hello" null 10 null 10.1 null true null ];
     expected = "{ \"hello\", 10, 10.100000, true }";
   };
-  "test returns dict" = {
+  "test returns named table" = {
     expr = toLua {
       foo = "hello";
       int = 10;
@@ -55,11 +58,11 @@ pkgs.lib.runTests {
     };
     expected = "{ [\"fail\"] = false, [\"float\"] = 10.100000, [\"foo\"] = \"hello\", [\"int\"] = 10, [\"success\"] = true }";
   };
-  "test returns dict without nullable items" = {
+  "test returns named table without nullable items" = {
     expr = toLua { foo = "hello"; bar = null; };
     expected = "{ [\"foo\"] = \"hello\" }";
   };
-  "test returns recursive dict" = {
+  "test returns recursive named table" = {
     expr = toLua {
       first = {
         second = {
@@ -69,10 +72,14 @@ pkgs.lib.runTests {
     };
     expected = "{ [\"first\"] = { [\"second\"] = { [\"last\"] = \"hello\" } } }";
   };
-  "test returns array with dict items" = {
+  "test return recursive table" = {
+    expr = toLua [ [ [ "foo" ] "bar" ] ];
+    expected = "{ { { \"foo\" }, \"bar\" } }";
+  };
+  "test returns table with one named field" = {
     expr = toLua [
       "foo"
-      (mkDictItem "foo" "hello")
+      (mkNamedField "foo" "hello")
       10
     ];
     expected = "{ \"foo\", [\"foo\"] = \"hello\", 10 }";
@@ -80,5 +87,9 @@ pkgs.lib.runTests {
   "test returns raw string" = {
     expr = toLua (mkLuaRaw "hello");
     expected = "hello";
+  };
+  "test throws an error when you try to use named field withoun table" = {
+    expr = tryEval (toLua (mkNamedField "foo" "bar"));
+    expected = failed;
   };
 }

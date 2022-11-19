@@ -8,32 +8,37 @@ let
   mkLuaNil = { _type = "nil"; };
   isLuaNil = val: getType val == "nil";
 
-  mkDictItem = name: value: {
-    _type = "dict_item";
+  mkNamedField = name: value: {
+    _type = "table_field";
     name = validString name;
     value = toLua value;
   };
-  isDictItem = val: getType val == "dict_item";
-  toLuaDictItem = name: value:
+  isNamedField = val: getType val == "table_field";
+  toLuaNamedField = name: value:
     if isNull value then null
     else "[${toLuaStr name}] = ${value}";
 
-  toLua = val:
+  toLua = val: toLuaInternal 0 val;
+
+  toLuaInternal = depth: val:
+    let nextDepth = depth + 1; in
     if isLuaNil val then "nil"
     else if isLuaRaw val then val.raw
-    else if isDictItem val then toLuaDictItem val.name val.value
-    else if isAttrs val then toLuaDict val
-    else if isList val then toLuaList val
+    else if isNamedField val then
+      if depth > 0 then toLuaNamedField val.name val.value
+      else error "You cannot render table field at the top level"
+    else if isAttrs val then toLuaTable nextDepth val
+    else if isList val then toLuaList nextDepth val
     else if isString val then toLuaStr val
     else if isFloat val || isInt val then toString val
     else if isBool val then toLuaBool val
     else if isNull val then null
-    else throw "[nix2lua] Value '${toString val}' is not supported";
+    else error "Value '${toString val}' is not supported";
 
-  toLuaList = val:
-    wrapObj (excludeNull (map toLua val));
+  toLuaList = depth: val:
+    wrapObj (excludeNull (map (toLuaInternal depth) val));
 
-  toLuaDict = val: toLua (attrValues (mapAttrs mkDictItem val));
+  toLuaTable = depth: val: toLuaInternal depth (attrValues (mapAttrs mkNamedField val));
 
   excludeNull = val: filter (v: !(isNull v)) val;
 
@@ -47,9 +52,11 @@ let
 
   validString = value:
     if isString value then value
-    else throw "[nix2lua] Value '${toString value}' is not a valid string";
+    else error "Value '${toString value}' is not a valid string";
+
+  error = message: throw "[nix2lua] ${message}";
 in
 {
   inherit toLua;
-  inherit mkLuaNil mkDictItem mkLuaRaw;
+  inherit mkLuaNil mkLuaRaw mkNamedField;
 }
