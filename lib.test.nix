@@ -88,6 +88,10 @@ pkgs.lib.runTests {
     expr = toLua (mkLuaRaw "hello");
     expected = "hello";
   };
+  "test returns path as string" = {
+    expr = toLua /foo/bar;
+    expected = "\"/foo/bar\"";
+  };
   "test throws an error when you try to use named field withoun table" = {
     expr = tryEval (toLua (mkNamedField "foo" "bar"));
     expected = failed;

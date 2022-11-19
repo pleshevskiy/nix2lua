@@ -1,58 +1,58 @@
 let
-  inherit (builtins) isString isFloat isInt isBool isList isAttrs isNull;
+  inherit (builtins) isString isFloat isInt isBool isList isAttrs isNull isPath;
   inherit (builtins) concatStringsSep filter mapAttrs attrValues;
 
   mkLuaRaw = raw: { _type = "raw"; inherit raw; };
-  isLuaRaw = val: getType val == "raw";
+  isLuaRaw = expr: getType expr == "raw";
 
   mkLuaNil = { _type = "nil"; };
-  isLuaNil = val: getType val == "nil";
+  isLuaNil = expr: getType expr == "nil";
 
-  mkNamedField = name: value: {
+  mkNamedField = name: expr: {
     _type = "table_field";
     name = validString name;
-    value = toLua value;
+    value = toLua expr;
   };
-  isNamedField = val: getType val == "table_field";
-  toLuaNamedField = name: value:
-    if isNull value then null
-    else "[${toLuaStr name}] = ${value}";
+  isNamedField = expr: getType expr == "table_field";
+  toLuaNamedField = name: expr:
+    if isNull expr then null
+    else "[${toLuaStr name}] = ${expr}";
 
   toLua = val: toLuaInternal 0 val;
 
-  toLuaInternal = depth: val:
+  toLuaInternal = depth: expr:
     let nextDepth = depth + 1; in
-    if isLuaNil val then "nil"
-    else if isLuaRaw val then val.raw
-    else if isNamedField val then
-      if depth > 0 then toLuaNamedField val.name val.value
+    if isLuaNil expr then "nil"
+    else if isLuaRaw expr then expr.raw
+    else if isNamedField expr then
+      if depth > 0 then toLuaNamedField expr.name expr.value
       else error "You cannot render table field at the top level"
-    else if isAttrs val then toLuaTable nextDepth val
-    else if isList val then toLuaList nextDepth val
-    else if isString val then toLuaStr val
-    else if isFloat val || isInt val then toString val
-    else if isBool val then toLuaBool val
-    else if isNull val then null
-    else error "Value '${toString val}' is not supported";
+    else if isAttrs expr then toLuaTable nextDepth expr
+    else if isList expr then toLuaList nextDepth expr
+    else if isString expr || isPath expr then toLuaStr expr
+    else if isFloat expr || isInt expr then toString expr
+    else if isBool expr then toLuaBool expr
+    else if isNull expr then null
+    else error "Value '${toString expr}' is not supported yet";
 
-  toLuaList = depth: val:
-    wrapObj (excludeNull (map (toLuaInternal depth) val));
+  toLuaList = depth: expr:
+    wrapObj (excludeNull (map (toLuaInternal depth) expr));
 
-  toLuaTable = depth: val: toLuaInternal depth (attrValues (mapAttrs mkNamedField val));
+  toLuaTable = depth: expr: toLuaInternal depth (attrValues (mapAttrs mkNamedField expr));
 
-  excludeNull = val: filter (v: !(isNull v)) val;
+  excludeNull = expr: filter (v: !(isNull v)) expr;
 
-  wrapObj = val: "{ ${concatStringsSep ", " val} }";
+  wrapObj = expr: "{ ${concatStringsSep ", " expr} }";
 
-  toLuaStr = val: "\"${validString val}\"";
+  toLuaStr = expr: "\"${validString expr}\"";
 
-  toLuaBool = val: if val then "true" else "false";
+  toLuaBool = expr: if expr then "true" else "false";
 
-  getType = val: if isAttrs val && val ? _type then val._type else null;
+  getType = expr: if isAttrs expr && expr ? _type then expr._type else null;
 
-  validString = value:
-    if isString value then value
-    else error "Value '${toString value}' is not a valid string";
+  validString = expr:
+    if isString expr || isPath expr then toString expr
+    else error "Value '${toString expr}' is not a valid string";
 
   error = message: throw "[nix2lua] ${message}";
 in
